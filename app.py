@@ -92,5 +92,18 @@ if res and res["success"]:
     ax.legend(loc='upper right')
     st.pyplot(fig)
     plt.close(fig)
+
+    # Local entropy profile
+    fig_s, ax_s = plt.subplots(figsize=(10, 4))
+    ax_s.plot(r, prof['s_local'], 'm-', lw=2, label='Total Local Entropy')
+    ax_s.plot(r, prof['s_ground'], 'c--', lw=1.5, label='Ground Band Entropy')
+    ax_s.plot(r, prof['s_excited'], color='brown', ls='-.', lw=1.5, label='Excited Band Entropy')
+    ax_s.set_xlabel('Radius $r$ (lattice sites)')
+    ax_s.set_ylabel('Local Entropy per Site')
+    ax_s.set_ylim(bottom=-0.02)
+    ax_s.grid(True, linestyle='--', alpha=0.6)
+    ax_s.legend(loc='upper right')
+    st.pyplot(fig_s)
+    plt.close(fig_s)
 elif res:
     st.error(res["reason"] or "Solver failed! Try different parameters.")

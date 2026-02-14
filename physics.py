@@ -241,7 +241,7 @@ def compute_profiles(mu, T, k, u, n_points=300):
     """Vectorised radial profiles for plotting.
 
     Returns dict with keys: r, n_total, n_ground, n_excited,
-    p_hole, p_singlon, p_doublon.
+    p_hole, p_singlon, p_doublon, s_ground, s_excited, s_local.
     """
     max_r = np.sqrt((abs(mu) + 12.0 * T) / k)
     r = np.linspace(0, max_r, n_points)
@@ -259,19 +259,35 @@ def compute_profiles(mu, T, k, u, n_points=300):
         z = e0 + 2.0 * e1 + e2
         return e0 / z, 2.0 * e1 / z, e2 / z
 
+    def _entropy_from_probs(p_h, p_s, p_d):
+        s = np.zeros_like(p_h)
+        mask_h = p_h > 1e-15
+        mask_s = p_s > 1e-15
+        mask_d = p_d > 1e-15
+        s[mask_h] += p_h[mask_h] * np.log(p_h[mask_h])
+        s[mask_s] += p_s[mask_s] * np.log(p_s[mask_s] / 2.0)
+        s[mask_d] += p_d[mask_d] * np.log(p_d[mask_d])
+        return -s
+
     # Ground band
     p0_h, p0_s, p0_d = _band_probs(mu_loc)
     n_ground = p0_s + 2.0 * p0_d
+    s_ground = _entropy_from_probs(p0_h, p0_s, p0_d)
 
     # Excited band (per orbital, then x2 for degeneracy)
     p1_h, p1_s, p1_d = _band_probs(mu_loc - DELTA)
     n_excited = 2.0 * (p1_s + 2.0 * p1_d)
+    s_excited = 2.0 * _entropy_from_probs(p1_h, p1_s, p1_d)
+    s_local = s_ground + s_excited
 
     return {
         'r': r,
         'n_total': n_ground + n_excited,
         'n_ground': n_ground,
         'n_excited': n_excited,
+        's_ground': s_ground,
+        's_excited': s_excited,
+        's_local': s_local,
         'p_hole': p0_h,
         'p_singlon': p0_s,
         'p_doublon': p0_d,
